@@ -11,12 +11,11 @@ dependencies:
     sdk: flutter
 
   # Firebase
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.14.0
-
+  firebase_core:
+  firebase_auth:
+  cloud_firestore:
   # State Management
-  get: ^4.6.6
+  get:
 
   # Navigation
   go_router: ^17.2.1
