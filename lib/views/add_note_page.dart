@@ -1,26 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:glassy_notes_app/controllers/note_controller.dart';
-import 'package:glassy_notes_app/widgets/glass_card.dart';
-import 'package:glassy_notes_app/widgets/custom_textfield.dart';
-import 'package:glassy_notes_app/widgets/custom_button.dart';
+import 'package:go_router/go_router.dart';
+import 'package:glassy_notes_app/main.dart';
 
-class AddNotePage extends StatelessWidget {
+class AddNotePage extends StatefulWidget {
   const AddNotePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final noteController = Get.find<NoteController>();
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+  State<AddNotePage> createState() => _AddNotePageState();
+}
 
+class _AddNotePageState extends State<AddNotePage> {
+  final titleController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  bool isSaving = false;
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveNote() async {
+    if (!formKey.currentState!.validate()) return;
+
+    setState(() => isSaving = true);
+
+    try {
+      final noteController = Get.find<NoteController>();
+      await noteController.addNote(
+        titleController.text.trim(),
+        descriptionController.text.trim(),
+      );
+      // ✅ navigate after save
+      final context = navigatorKey.currentContext;
+      if (context != null) GoRouter.of(context).go('/home');
+    } catch (e) {
+      debugPrint('❌ Save error: $e');
+    } finally {
+      if (mounted) setState(() => isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Add Note'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.black87),
+          // ✅ back button goes to home
+          onPressed: () => GoRouter.of(context).go('/home'),
+        ),
+        title: const Text(
+          'New Note',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          // ✅ save button in appbar too
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: isSaving
+                ? const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFFFF6B35),
+                ),
+              ),
+            )
+                : TextButton(
+              onPressed: _saveNote,
+              child: const Text(
+                'Save',
+                style: TextStyle(
+                  color: Color(0xFFFF6B35),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Container(
-        decoration: BoxDecoration(
+        width: double.infinity,
+        height: double.infinity,
+        decoration:  BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -32,34 +108,40 @@ class AddNotePage extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: GlassCard(
-              child: Form(
-                key: formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Icon(
-                      Icons.note_add_rounded,
-                      size: 80,
-                      color: Colors.grey[800],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Create New Note',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[900],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Form(
+              key: formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Title field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.9),
+                        width: 1.5,
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
-                    CustomTextField(
+                    child: TextFormField(
                       controller: titleController,
-                      label: 'Title',
-                      icon: Icons.title,
+                      cursorColor: const Color(0xFFFF6B35), // ✅ orange cursor
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Note title...',
+                        hintStyle: TextStyle(
+                          color: Colors.black38,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a title';
@@ -67,47 +149,85 @@ class AddNotePage extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-                    CustomTextField(
-                      controller: descriptionController,
-                      label: 'Description',
-                      icon: Icons.description,
-                      maxLines: 5,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a description';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomButton(
-                            onPressed: () => Get.back(),
-                            text: 'Cancel',
-                            isOutlined: true,
-                          ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Description field
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.9),
+                          width: 1.5,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: CustomButton(
-                            onPressed: () {
-                              if (formKey.currentState!.validate()) {
-                                noteController.addNote(
-                                  titleController.text,
-                                  descriptionController.text,
-                                );
-                              }
-                            },
-                            text: 'Save Note',
-                          ),
+                      ),
+                      child: TextFormField(
+                        controller: descriptionController,
+                        cursorColor: const Color(0xFFFF6B35), // ✅ orange cursor
+                        expands: true,
+                        maxLines: null,
+                        minLines: null,
+                        textAlignVertical: TextAlignVertical.top,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          height: 1.6,
                         ),
-                      ],
+                        decoration: const InputDecoration(
+                          hintText: 'Start writing your note...',
+                          hintStyle: TextStyle(color: Colors.black38),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(16),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a description';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Save button with loading
+                  SizedBox(
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: isSaving ? null : _saveNote,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6B35), // ✅ orange
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                        const Color(0xFFFF6B35).withOpacity(0.6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: isSaving
+                          ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                          : const Text(
+                        'Save Note',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

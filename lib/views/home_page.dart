@@ -16,14 +16,14 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFDCEEFD),
-              Color(0xFFEDE7F6),
-              Color(0xFFFCE4EC),
+              Colors.blue.shade100,
+              Colors.purple.shade100,
+              Colors.pink.shade100,
             ],
           ),
         ),
@@ -150,6 +150,7 @@ class HomePage extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
+              style: TextButton.styleFrom(foregroundColor: Colors.greenAccent[700]),
               child: const Text('Cancel')),
           TextButton(
             onPressed: () {

@@ -6,27 +6,24 @@ class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Auth methods
   Future<User?> signUp(String email, String password, String name) async {
     try {
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
       await userCredential.user?.updateDisplayName(name);
       await userCredential.user?.reload();
-
-      // Save user data to Firestore
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'name': name,
         'email': email,
         'createdAt': FieldValue.serverTimestamp(),
       });
-
       return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_handleAuthError(e)); // ✅ wrap in Exception
     } catch (e) {
-      throw _handleAuthError(e);
+      throw Exception('An unexpected error occurred: $e');
     }
   }
 
@@ -37,8 +34,10 @@ class FirebaseService {
         password: password,
       );
       return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_handleAuthError(e)); // ✅ wrap in Exception
     } catch (e) {
-      throw _handleAuthError(e);
+      throw Exception('An unexpected error occurred: $e');
     }
   }
 
@@ -50,12 +49,15 @@ class FirebaseService {
     return _auth.currentUser;
   }
 
-  // Notes methods
   Future<void> addNote(String title, String description) async {
     final user = getCurrentUser();
     if (user == null) throw Exception('User not logged in');
 
-    await _firestore.collection('users').doc(user.uid).collection('notes').add({
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('notes')
+        .add({
       'title': title,
       'description': description,
       'createdAt': FieldValue.serverTimestamp(),
@@ -78,7 +80,8 @@ class FirebaseService {
         .toList());
   }
 
-  Future<void> updateNote(String noteId, String title, String description) async {
+  Future<void> updateNote(
+      String noteId, String title, String description) async {
     final user = getCurrentUser();
     if (user == null) throw Exception('User not logged in');
 
@@ -106,23 +109,25 @@ class FirebaseService {
         .delete();
   }
 
-  String _handleAuthError(Object error) {
-    if (error is FirebaseAuthException) {
-      switch (error.code) {
-        case 'email-already-in-use':
-          return 'Email already in use';
-        case 'weak-password':
-          return 'Password is too weak';
-        case 'invalid-email':
-          return 'Invalid email address';
-        case 'user-not-found':
-          return 'User not found';
-        case 'wrong-password':
-          return 'Wrong password';
-        default:
-          return error.message ?? 'An error occurred';
-      }
+  // ✅ takes FirebaseAuthException directly, not Object
+  String _handleAuthError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'Email already in use';
+      case 'weak-password':
+        return 'Password is too weak';
+      case 'invalid-email':
+        return 'Invalid email address';
+      case 'user-not-found':
+        return 'User not found';
+      case 'wrong-password':
+        return 'Wrong password';
+      case 'invalid-credential':
+        return 'Invalid email or password'; // ✅ newer Firebase SDK uses this
+      case 'network-request-failed':
+        return 'No internet connection';
+      default:
+        return e.message ?? 'An error occurred (${e.code})';
     }
-    return 'An error occurred';
   }
 }

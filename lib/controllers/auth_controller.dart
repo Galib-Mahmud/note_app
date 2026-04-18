@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:glassy_notes_app/core/firebase/firebase_service.dart';
+import 'package:glassy_notes_app/main.dart';
 
 class AuthController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
@@ -11,8 +13,11 @@ class AuthController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   void _showSnackbar(String message, {bool isError = false}) {
-    final context = Get.context;
-    if (context == null) return;
+    final context = navigatorKey.currentContext;
+    if (context == null) {
+      debugPrint('❌ Snackbar context is null');
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -23,6 +28,18 @@ class AuthController extends GetxController {
     );
   }
 
+  void _navigate(String path) {
+    final context = navigatorKey.currentContext;
+    debugPrint('🧭 Navigating to $path — context null: ${context == null}');
+    if (context == null) return;
+    GoRouter.of(context).go(path);
+  }
+
+  // ✅ strips "Exception: " prefix cleanly
+  String _cleanError(Object e) {
+    return e.toString().replaceFirst('Exception: ', '');
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -30,7 +47,9 @@ class AuthController extends GetxController {
   }
 
   void _checkAuthStatus() {
-    isLoggedIn.value = _firebaseService.getCurrentUser() != null;
+    final user = _firebaseService.getCurrentUser();
+    isLoggedIn.value = user != null;
+    debugPrint('🔍 Auth check — isLoggedIn: ${isLoggedIn.value}');
   }
 
   Future<void> signUp(String email, String password, String name) async {
@@ -38,17 +57,15 @@ class AuthController extends GetxController {
     errorMessage.value = '';
     try {
       final user = await _firebaseService.signUp(email, password, name);
+      debugPrint('📝 SignUp result — user: $user');
       if (user != null) {
         isLoggedIn.value = false;
         _showSnackbar('Account created! Please sign in.');
-        // ✅ After signup → go to login
-        final context = Get.context;
-        if (context != null) {
-          GoRouter.of(context).go('/login');
-        }
+        _navigate('/login');
       }
     } catch (e) {
-      errorMessage.value = e.toString();
+      debugPrint('❌ SignUp error: $e');
+      errorMessage.value = _cleanError(e); // ✅
       _showSnackbar(errorMessage.value, isError: true);
     } finally {
       isLoading.value = false;
@@ -60,15 +77,19 @@ class AuthController extends GetxController {
     errorMessage.value = '';
     try {
       final user = await _firebaseService.signIn(email, password);
+      debugPrint('🔐 SignIn result — user: $user');
       if (user != null) {
         isLoggedIn.value = true;
+        debugPrint('✅ isLoggedIn set to true, navigating to /home');
         _showSnackbar('Welcome back!');
-        // ✅ After signin → go to home
-        final context = Get.context;
-        if (context != null) GoRouter.of(context).go('/home');
+        _navigate('/home');
+      } else {
+        debugPrint('❌ SignIn returned null user');
       }
-    } catch (e) {
-      errorMessage.value = e.toString();
+    } catch (e, stack) {
+      debugPrint('❌ SignIn error: $e');
+      debugPrint('📚 Stack: $stack');
+      errorMessage.value = _cleanError(e); // ✅
       _showSnackbar(errorMessage.value, isError: true);
     } finally {
       isLoading.value = false;
@@ -78,7 +99,7 @@ class AuthController extends GetxController {
   Future<void> signOut() async {
     await _firebaseService.signOut();
     isLoggedIn.value = false;
-    final context = Get.context;
-    if (context != null) GoRouter.of(context).go('/login');
+    debugPrint('🚪 Signed out, navigating to /login');
+    _navigate('/login');
   }
 }

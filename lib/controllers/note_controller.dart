@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:go_router/go_router.dart';
 import 'package:glassy_notes_app/core/firebase/firebase_service.dart';
 import 'package:glassy_notes_app/models/note_model.dart';
+import 'package:glassy_notes_app/main.dart'; // ✅ navigatorKey
 
 class NoteController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
@@ -11,7 +11,7 @@ class NoteController extends GetxController {
   final RxBool isLoading = true.obs;
 
   void _showSnackbar(String message, {bool isError = false}) {
-    final context = Get.context;
+    final context = navigatorKey.currentContext; // ✅ navigatorKey
     if (context == null) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -36,14 +36,16 @@ class NoteController extends GetxController {
     });
   }
 
+  // ✅ navigation সরানো — AddNotePage handle করবে
+  // rethrow করা হয়েছে যাতে AddNotePage এ error catch হয়
   Future<void> addNote(String title, String description) async {
     try {
       await _firebaseService.addNote(title, description);
       _showSnackbar('Note added successfully');
-      final context = Get.context;
-      if (context != null) GoRouter.of(context).go('/home');
     } catch (e) {
+      debugPrint('❌ addNote error: $e');
       _showSnackbar('Failed to add note', isError: true);
+      rethrow; // ✅
     }
   }
 
@@ -52,6 +54,7 @@ class NoteController extends GetxController {
       await _firebaseService.updateNote(noteId, title, description);
       _showSnackbar('Note updated successfully');
     } catch (e) {
+      debugPrint('❌ updateNote error: $e');
       _showSnackbar('Failed to update note', isError: true);
     }
   }
@@ -61,6 +64,7 @@ class NoteController extends GetxController {
       await _firebaseService.deleteNote(noteId);
       _showSnackbar('Note deleted successfully');
     } catch (e) {
+      debugPrint('❌ deleteNote error: $e');
       _showSnackbar('Failed to delete note', isError: true);
     }
   }

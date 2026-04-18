@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:glassy_notes_app/views/splash_screen.dart';
 import 'package:glassy_notes_app/views/login_page.dart';
@@ -5,27 +6,25 @@ import 'package:glassy_notes_app/views/registration_page.dart';
 import 'package:glassy_notes_app/views/home_page.dart';
 import 'package:glassy_notes_app/views/add_note_page.dart';
 import 'package:glassy_notes_app/controllers/auth_controller.dart';
+import 'package:glassy_notes_app/main.dart'; // ✅ navigatorKey
 import 'package:get/get.dart';
 
 class AppRouter {
   final AuthController authController = Get.find<AuthController>();
 
   late final GoRouter router = GoRouter(
+    navigatorKey: navigatorKey, // ✅
     initialLocation: '/splash',
     redirect: (context, state) {
       final isLoggedIn = authController.isLoggedIn.value;
-      final isSplash = state.uri.toString() == '/splash';
-      final isLogin = state.uri.toString() == '/login';
-      final isRegister = state.uri.toString() == '/register';
+      final path = state.uri.toString();
 
-      if (isLoggedIn && (isLogin || isRegister || isSplash)) {
-        return '/home';
-      }
+      final isPublic = path == '/splash' ||
+          path == '/login' ||
+          path == '/register';
 
-      if (!isLoggedIn && !isLogin && !isRegister && !isSplash) {
-        return '/login';
-      }
-
+      if (isLoggedIn && isPublic) return '/home';
+      if (!isLoggedIn && !isPublic) return '/login';
       return null;
     },
     routes: [

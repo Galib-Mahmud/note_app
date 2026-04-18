@@ -18,20 +18,28 @@ dependencies:
   get:
 
   # Navigation
-  go_router: ^17.2.1
+  go_router:
 
   # UI Components
-  google_fonts: ^6.1.0
-  flutter_staggered_animations: ^1.1.0
-  shimmer: ^3.0.0
+  google_fonts:
+  flutter_staggered_animations:
+  shimmer:
 
   # Utilities
-  intl: ^0.18.1
+  intl:
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons:
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon.png"
+  min_sdk_android: 23
+  adaptive_icon_background: "#DCEEFF"
+  adaptive_icon_foreground: "assets/images/icon.png"
 
 flutter:
   uses-material-design: true

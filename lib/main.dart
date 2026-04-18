@@ -5,26 +5,29 @@ import 'package:glassy_notes_app/app/routes/app_routes.dart';
 import 'package:glassy_notes_app/app/themes/app_theme.dart';
 import 'package:glassy_notes_app/controllers/auth_controller.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
-  // ✅ Put AuthController before runApp so AppRouter can find it
   Get.put(AuthController(), permanent: true);
-
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+
+  final _appRouter = AppRouter(); // ✅ single instance
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router( // ✅ plain MaterialApp.router, not GetMaterialApp
+    return GetMaterialApp.router(
       title: 'Glassy Notes',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      routerConfig: AppRouter().router, // ✅ now works correctly
+      routerDelegate: _appRouter.router.routerDelegate,
+      routeInformationParser: _appRouter.router.routeInformationParser,
+      routeInformationProvider: _appRouter.router.routeInformationProvider,
     );
   }
 }

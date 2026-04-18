@@ -11,7 +11,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -76,14 +77,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.note_alt_rounded,
-                      size: 80,
-                      color: Colors.grey[800],
+                    Image.asset(
+                      'assets/images/l.png',
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Glassy Notes',
+                      'Notes',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

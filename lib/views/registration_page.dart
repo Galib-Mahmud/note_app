@@ -6,18 +6,34 @@ import 'package:glassy_notes_app/widgets/glass_card.dart';
 import 'package:glassy_notes_app/widgets/custom_textfield.dart';
 import 'package:glassy_notes_app/widgets/custom_button.dart';
 
-class RegistrationPage extends StatelessWidget {
+class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authController = Get.find<AuthController>();
-    final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+  State<RegistrationPage> createState() => _RegistrationPageState();
+}
 
+class _RegistrationPageState extends State<RegistrationPage> {
+  final authController = Get.find<AuthController>();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true;         // ✅
+  bool _obscureConfirmPassword = true;  // ✅
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -41,37 +57,27 @@ class RegistrationPage extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.person_outline,
-                        size: 60,
-                        color: Colors.grey[800],
+                      Image.asset(
+                        'assets/images/l.png',
+                        width: 270,
+                        height: 100,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Create Account',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[900],
-                        ),
-                      ),
+
+                      Text('Create Account',
+                          style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[900])),
                       const SizedBox(height: 8),
-                      Text(
-                        'Sign up to get started',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[700],
-                        ),
-                      ),
+                      Text('Sign up to get started',
+                          style: TextStyle(fontSize: 16, color: Colors.grey[700])),
                       const SizedBox(height: 32),
                       CustomTextField(
                         controller: nameController,
                         label: 'Full Name',
                         icon: Icons.person_outline,
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your name';
-                          }
+                          if (value == null || value.isEmpty) return 'Please enter your name';
                           return null;
                         },
                       ),
@@ -82,44 +88,48 @@ class RegistrationPage extends StatelessWidget {
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Please enter a valid email';
-                          }
+                          if (value == null || value.isEmpty) return 'Please enter your email';
+                          if (!value.contains('@')) return 'Please enter a valid email';
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
+                      // ✅ password with toggle
                       CustomTextField(
                         controller: passwordController,
                         label: 'Password',
                         icon: Icons.lock_outline,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: Colors.grey[600],
+                          ),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
+                          if (value == null || value.isEmpty) return 'Please enter your password';
+                          if (value.length < 6) return 'Password must be at least 6 characters';
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
+                      // ✅ confirm password with toggle
                       CustomTextField(
                         controller: confirmPasswordController,
                         label: 'Confirm Password',
                         icon: Icons.lock_outline,
-                        obscureText: true,
+                        obscureText: _obscureConfirmPassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: Colors.grey[600],
+                          ),
+                          onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
-                          }
-                          if (value != passwordController.text) {
-                            return 'Passwords do not match';
-                          }
+                          if (value == null || value.isEmpty) return 'Please confirm your password';
+                          if (value != passwordController.text) return 'Passwords do not match';
                           return null;
                         },
                       ),
@@ -141,19 +151,14 @@ class RegistrationPage extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'Already have an account? ',
-                            style: TextStyle(color: Colors.grey[700]),
-                          ),
+                          Text('Already have an account? ',
+                              style: TextStyle(color: Colors.grey[700])),
                           TextButton(
                             onPressed: () => context.go('/login'),
-                            child: Text(
-                              'Sign In',
-                              style: TextStyle(
-                                color: Colors.grey[900],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: Text('Sign In',
+                                style: TextStyle(
+                                    color: Colors.grey[900],
+                                    fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),
